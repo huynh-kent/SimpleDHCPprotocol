@@ -265,12 +265,7 @@ class Server:
                                     # send OFFER message
                                 # else 
                                     # send DECLINE message
-
-    def recDECLINE(self, clientMessage):
-        pass
-        # TODO
                 
-
 
 if __name__ == "__main__":
     # init server
@@ -305,6 +300,4 @@ if __name__ == "__main__":
         if 'List' in message:
             server.printList()
 
-        if 'Decline' in message:
-            server.recDECLINE(message)
 
