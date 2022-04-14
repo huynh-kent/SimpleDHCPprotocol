@@ -33,15 +33,12 @@ class Server:
         self.cur.execute('''CREATE TABLE IF NOT EXISTS ipList
                         (ip text, mac text, timestamp int, acked boolean, record int)''')
 
-        # TODO MAKE ONLY INSERT ONCE
         for i in range(14):
             self.cur.execute(f"INSERT INTO ipList VALUES ('192.168.45.{i+1}', 'N/A', 0, False, 0)")
 
         #self.con.commit()
     def timestampTime(self):
-        # timestamp_time = time.strftime(f"%H:%M:%S", (self.t+self.leaseTime))
-        timestamp_time = time.ctime(time.time()+60)
-        return timestamp_time
+        return time.ctime(time.time()+60)
 
     def sendOFFER(self):
         print (f"Server: Assigning IP {self.clientIndex[0]} to Mac Address {self.clientMac}")
