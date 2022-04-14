@@ -25,21 +25,21 @@ class Server:
         self.recordNumber = 1
 
         self.t = time.localtime()
-        self.current_time = time.strftime(f"%H:%M:%S", self.t)
+        self.current_time = time.strftime("%H:%M:%S", self.t)
 
         # connection with database using sqlite
         self.con = sqlite3.connect(':memory:')
         self.cur = self.con.cursor()
         self.cur.execute('''CREATE TABLE IF NOT EXISTS ipList
                         (ip text, mac text, timestamp int, acked boolean, record int)''')
-        
+
         # TODO MAKE ONLY INSERT ONCE
         for i in range(14):
             self.cur.execute(f"INSERT INTO ipList VALUES ('192.168.45.{i+1}', 'N/A', 0, False, 0)")
 
         #self.con.commit()
     def timestampTime(self):
-        #timestamp_time = time.strftime(f"%H:%M:%S", (self.t+self.leaseTime))
+        # timestamp_time = time.strftime(f"%H:%M:%S", (self.t+self.leaseTime))
         timestamp_time = time.ctime(time.time()+60)
         return timestamp_time
 
@@ -107,7 +107,7 @@ class Server:
             print (f"Server: I see MAC {self.clientMac} is not in record.")
 
     def checkAvailableIP(self):
-        for row in self.cur.execute(f"SELECT * FROM ipList where mac = 'N/A' or timestamp = 0 LIMIT 1"):
+        for row in self.cur.execute("SELECT * FROM ipList where mac = 'N/A' or timestamp = 0 LIMIT 1"):
             index = row
         try:
             self.clientIndex = index
@@ -176,13 +176,12 @@ class Server:
             else:
                 self.sendACK()
                 # send ACKNOWLEDGE w/ client mac, ip, and timestamp
-        else: # doesnt exist in list
-            if self.checkAvailableIP():
-                self.assignIP()
-                self.setAckedFalse()
-                self.sendOFFER()
-            else: # no available IP 
-                self.sendDECLINE()
+        elif self.checkAvailableIP():
+            self.assignIP()
+            self.setAckedFalse()
+            self.sendOFFER()
+        else: # no available IP 
+            self.sendDECLINE()
     
     def recREQUEST(self, clientMessage):
         # check clients info
@@ -192,14 +191,11 @@ class Server:
         print (f"Server: I see that client with MAC address {self.clientMac} is REQUESTING IP {self.clientIP}")
 
         # check if IP matches assigned IP
-        if self.checkMessageIPMatches():
-            if self.checkTimestampExpired():
-                self.sendDECLINE()
-            else: # timestamp not expired
-                self.setAckedTrue()
-                self.sendACK()
-        else: # doesnt match assigned
+        if self.checkMessageIPMatches() and self.checkTimestampExpired() or not self.checkMessageIPMatches():
             self.sendDECLINE()
+        else: # timestamp not expired
+            self.setAckedTrue()
+            self.sendACK()
 
     # when receives a REQUEST
         # check confirm IP address matches the assigned
@@ -219,8 +215,6 @@ class Server:
             self.releaseIP()
             self.setTimestampCurrentTime()
             self.setAckedFalse()
-        else:
-            pass
         # when receives a RELEASE
             # check if MAC in list, if yes
                 # release IP address
