@@ -102,11 +102,8 @@ class Client:
         print (f"Server: Sent me an OFFER for {self.messageIP}")
 
         # check if Mac matches our Mac address
-        if self.checkMessageMacMatches():
-            if self.checkTimestampExpired():
-                pass # TODO
-            else: # timestamp not expired
-                self.sendREQUEST()
+        if self.checkMessageMacMatches() and not self.checkTimestampExpired():
+            self.sendREQUEST()
 
         # when receives an OFFER, check if MAC address is same as OURS
             # if yes
@@ -169,15 +166,8 @@ if __name__ == "__main__":
         # when receives a DECLINE
         if 'Decline' in message:
             client.recDECLINE()
-    # display a menu for client w/ 3 options
-        # release : send a RELEASE message to the server w/ MAC and IP
-        # renew : send a RENEW message to server w/ MAC and IP
-        # quit : terminate
-    menu = {}
-    menu['1'] = "Release"
-    menu['2'] = "Renew"
-    menu['3'] = "Exit & Quit"
-    menu['4'] = "Print List"
+
+    menu = {'1': "Release", '2': "Renew", '3': "Exit & Quit", '4': "Print List"}
     while True:
         options = menu.keys()
         for selection in options:
