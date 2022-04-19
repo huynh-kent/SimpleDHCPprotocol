@@ -10,7 +10,7 @@ The records are stored in memory through SQLite
 
 Implements SQLite3 to store and edit records of IP addresses
 
-Each record contains [ IP address, MAC address, Timestamp, Acked, Record Number ]
+Each record contains [ IP address, MAC address, Timestamp, Acked (1 or 0), Record Number ]
 
 Client sends a Discover message
 
