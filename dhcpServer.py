@@ -1,11 +1,24 @@
 from random import random
 from socket import *
 
+from numpy import record
+
 from Message import Message, MESSAGE_TYPE
 from random import randint
 import sqlite3
 import time
 
+"""
+Message Types
+    0 = Discover
+    1 = Offer
+    2 = Request
+    3 = Decline
+    4 = Ack
+    5 = Negative Ack
+    6 = Release 
+    7 = Informational 
+"""
 
 
 class Server:
@@ -13,7 +26,7 @@ class Server:
     def __init__(self):
         # create server socket
         self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.port = 18001
+        self.port = 18000
         self.socket.bind(('', self.port))
 
         self.clientMac = None
@@ -38,10 +51,10 @@ class Server:
 
         #self.con.commit()
     def timestampTime(self):
-        return time.ctime(time.time()+60)
+        return time.ctime(time.time()+self.leaseTime)
 
     def sendOFFER(self):
-        print (f"Server: Assigning IP {self.clientIndex[0]} to Mac Address {self.clientMac}")
+        print (f"Server: Assigning IP {self.clientIndex[0]} to MAC Address {self.clientMac}")
         # encode message with info
         message = Message(MESSAGE_TYPE[1], self.clientMac, self.clientIndex[0], self.timestampTime())
         message.encodeMessage()
@@ -50,7 +63,7 @@ class Server:
         self.socket.sendto(message.message_str.encode(), clientAddress)
 
     def sendACK(self):
-        print (f"Server: Acknowledging IP {self.clientIndex[0]} with Mac Address {self.clientMac}")
+        print (f"Server: Acknowledging IP {self.clientIndex[0]} with MAC Address {self.clientMac}")
         # encode message with info
         message = Message(MESSAGE_TYPE[3], self.clientMac, self.clientIndex[0], self.timestampTime())
         message.encodeMessage()
@@ -83,14 +96,17 @@ class Server:
 
     
     def printList(self):
-        for row in self.cur.execute('SELECT * FROM ipList'):
-            print(row)
+        # create recordlist to send to admin
+        record_list = list(self.cur.execute('SELECT * FROM ipList'))
+        print ("Server: Sending Record List to Admin")
+        # encode message with info
+        message = Message(MESSAGE_TYPE[3], None, record_list, None)
+        message.encodeMessage()
 
-        #TEST
-        try:
-            self.checkTimestampExpired()
-        except:
-            pass
+        # send RecordList message
+        self.socket.sendto(message.message_str.encode(), clientAddress)
+
+
 
 
     def checkMacInList(self):
@@ -98,7 +114,7 @@ class Server:
             index = row
         try:
             self.clientIndex = index
-            #print (self.clientIndex)
+            print (f"Server: I see MAC {self.clientMac} is in our record.")
             return True
         except:
             print (f"Server: I see MAC {self.clientMac} is not in record.")
@@ -111,12 +127,12 @@ class Server:
             #print (f"Available IP - {self.clientIndex[0]}")
             return True
         except:
-            print ("No Available Index")
+            print ("Server: No Available IP Address")
         
 
     def checkTimestampExpired(self):
         if time.ctime() > self.clientIndex[2] or self.clientIndex == 0:
-            print ("expired")
+            print ("Server: Timestamp has expired")
             return True
 
 
@@ -128,7 +144,7 @@ class Server:
             #print (self.clientIndex)
             return True
         except:
-            print ("IP Doesnt Match")
+            print ("Server: IP Doesnt Match")
 
     def releaseIP(self):
         self.setTimestampCurrentTime()
@@ -162,7 +178,6 @@ class Server:
         # check clients info
         self.setClientInfo(clientMessage)
         # print feedback
-        print (f"Client: I am DISCOVERING with MAC address {self.clientMac}.")
         print (f"Server: I see that client with MAC address {self.clientMac} is DISCOVERING.")
 
         # check if mac address exists in list
@@ -184,7 +199,6 @@ class Server:
         # check clients info
         self.setClientInfo(clientMessage)
         # print feedback
-        print (f"Client: I am REQUESTING IP address {self.clientIP}.")
         print (f"Server: I see that client with MAC address {self.clientMac} is REQUESTING IP {self.clientIP}")
 
         # check if IP matches assigned IP
@@ -201,17 +215,22 @@ class Server:
                 # if yes DECLINE
                 # else set Acked to True and send ACK message w/ MAC, IP, timestamp
 
+    def printNewList(self):
+        print ("Printing updated list of clients.")
+        for row in list(self.cur.execute('SELECT * FROM ipList')):
+            print (row)
+
     def recRELEASE(self, clientMessage):
         # check clients info
         self.setClientInfo(clientMessage)
         # print feedback
-        print (f"Client: I want to RELEASE my IP address {self.clientIP}.")
-        print (f"Server: I am RELEASING MAC address {self.clientMac} from their IP {self.clientIP}.")
 
-        if self.checkMacInList():
+        if self.checkMacInList() and self.checkMessageIPMatches():
             self.releaseIP()
             self.setTimestampCurrentTime()
             self.setAckedFalse()
+            print (f"Server: I am RELEASING MAC address {self.clientMac} from their IP {self.clientIP}.")
+            self.printNewList()
         # when receives a RELEASE
             # check if MAC in list, if yes
                 # release IP address
@@ -224,7 +243,6 @@ class Server:
         # check client info
         self.setClientInfo(clientMessage)
         # print feedback
-        print (f"Client: I want to RENEW my IP address {self.clientIP}.")
         print (f"Server: I see that client with MAC address {self.clientMac} wants to RENEW their IP {self.clientIP}.")
 
         if self.checkMacInList():
@@ -264,7 +282,7 @@ if __name__ == "__main__":
 
     # new server records
     print ('Server Online---------------')
-    server.printList()
+    #server.printList()
 
     while True:
         # receive messages using UDP

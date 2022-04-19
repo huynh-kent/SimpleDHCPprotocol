@@ -20,7 +20,7 @@ class Client:
     def __init__(self):
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.serverPort = 18000
-        self.macAddress = gma()
+        self.macAddress = 'fc:e2:6c:14:8a:f1'
         self.hostName = 'localhost'
         self.ipAddress = '0.0.0.0'
         self.lastIP = None
@@ -46,7 +46,7 @@ class Client:
 
 
     def sendDISCOVER(self):
-        print (f"Client: I am DISCOVERING with MAC address {self.macAddress}")
+        print (f"Client2: I am DISCOVERING with MAC address {self.macAddress}")
         # encode message
         message = Message(MESSAGE_TYPE[0], self.macAddress, self.ipAddress, self.timestamp)
         message.encodeMessage()
@@ -58,7 +58,7 @@ class Client:
         self.receiveMessage()
 
     def sendREQUEST(self):
-        print (f"Client: I am REQUESTING IP address {self.messageIP}")
+        print (f"Client2: I am REQUESTING IP address {self.messageIP}")
         # encode message
         message = Message(MESSAGE_TYPE[2], self.macAddress, self.messageIP, self.messageTimestamp)
         message.encodeMessage()
@@ -70,7 +70,7 @@ class Client:
         self.receiveMessage()
 
     def sendRELEASE(self):
-        print (f"Client: I want to RELEASE my IP address {self.ipAddress}")
+        print (f"Client2: I want to RELEASE my IP address {self.ipAddress}")
         # encode message
         message = Message(MESSAGE_TYPE[5], self.macAddress, self.ipAddress, None)
         message.encodeMessage()
@@ -82,7 +82,7 @@ class Client:
         self.ipAddress = '0.0.0.0'
 
     def sendRENEW(self):
-        print (f"Client: I want to RENEW my IP address {self.lastIP}")
+        print (f"Client2: I want to RENEW my IP address {self.lastIP}")
         # encode message
         message = Message(MESSAGE_TYPE[6], self.macAddress, self.lastIP, None)
         message.encodeMessage()
@@ -110,7 +110,7 @@ class Client:
         # load message data
         self.setMessageInfo(serverMessage)
         # feedback
-        print (f"Client: I have received an OFFER for {self.messageIP}")
+        print (f"Client2: I have received an OFFER for {self.messageIP}")
 
         # check if Mac matches our Mac address
         if self.checkMessageMacMatches() and not self.checkTimestampExpired():
@@ -131,12 +131,12 @@ class Client:
         # load message data
         self.setMessageInfo(serverMessage)
         # feedback
-        print (f"Client: I have received ACKNOWLEDGEMENT that IP address {self.messageIP} belongs my MAC address {self.messageMac}")
+        print (f"Client2: I have received ACKNOWLEDGEMENT that IP address {self.messageIP} belongs my MAC address {self.messageMac}")
 
         if self.checkMessageMacMatches():
-            print (f"Client: IP address {self.messageIP} has been assigned to this client, which will be expired at time {self.messageTimestamp}.")
+            print (f"Client2: IP address {self.messageIP} has been assigned to this client, which will be expired at time {self.messageTimestamp}.")
         else:
-            print ("Client: That is not our MAC address, terminating.")
+            print ("Client2: That is not our MAC address, terminating.")
             self.quit()
         # when receives an ACKNOWLEDGE, check if MAC address is same as OURS
             # if not, print a proper message & terminate
@@ -148,7 +148,7 @@ class Client:
 
     # client receives DECLINE
     def recDECLINE(self):
-        print ("Client: Our request was DECLINED, terminating.")
+        print ("Client2: Our request was DECLINED, terminating.")
         self.quit()
 
 
